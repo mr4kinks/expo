@@ -5,7 +5,12 @@ exports.StackRouter = exports.stackRouterOverride = void 0;
 const native_1 = require("@react-navigation/native");
 const native_stack_1 = require("@react-navigation/native-stack");
 const non_secure_1 = require("nanoid/non-secure");
+<<<<<<< HEAD
 const react_1 = require("react");
+=======
+const react_native_1 = require("react-native");
+const ModalStack_1 = require("./ModalStack");
+>>>>>>> 0665ba5c (Add vaul modal integration to router-e2e tests)
 const withLayoutContext_1 = require("./withLayoutContext");
 const LinkPreviewContext_1 = require("../link/preview/LinkPreviewContext");
 const useScreens_1 = require("../useScreens");
@@ -261,6 +266,7 @@ function filterSingular(state, getId) {
     };
 }
 const Stack = Object.assign((props) => {
+<<<<<<< HEAD
     const { isPreviewOpen } = (0, LinkPreviewContext_1.useLinkPreviewContext)();
     const screenOptions = (0, react_1.useMemo)(() => {
         if (isPreviewOpen) {
@@ -269,6 +275,15 @@ const Stack = Object.assign((props) => {
         return props.screenOptions;
     }, [props.screenOptions, isPreviewOpen]);
     return (<RNStack {...props} screenOptions={screenOptions} UNSTABLE_router={exports.stackRouterOverride}/>);
+=======
+    const isWeb = react_native_1.Platform.OS === 'web';
+    if (isWeb) {
+        return <ModalStack_1.RouterModal {...props} UNSTABLE_router={exports.stackRouterOverride}/>;
+    }
+    else {
+        return <RNStack {...props} UNSTABLE_router={exports.stackRouterOverride}/>;
+    }
+>>>>>>> 0665ba5c (Add vaul modal integration to router-e2e tests)
 }, {
     Screen: RNStack.Screen,
     Protected: Protected_1.Protected,
