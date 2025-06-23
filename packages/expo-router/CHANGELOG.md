@@ -10,7 +10,6 @@
 - Add experimental link preview (iOS only) ([#37336](https://github.com/expo/expo/pull/37336) by [@Ubax](https://github.com/Ubax))
 - Allow for multiple children in Link.Trigger ([#37700](https://github.com/expo/expo/pull/37700) by [@Ubax](https://github.com/Ubax))
 
-
 ### 🐛 Bug fixes
 
 ### 💡 Others
