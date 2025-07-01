@@ -38,7 +38,7 @@ export type ExtendedStackNavigationOptions = NativeStackNavigationOptions & {
      */
     modalOverlayBackground?: string;
 };
-declare const RNStack: import("react").ForwardRefExoticComponent<Omit<Omit<import("@react-navigation/native-stack").NativeStackNavigatorProps, "initialRouteName" | "children" | "layout" | "screenListeners" | "screenOptions" | "screenLayout" | "UNSTABLE_router" | "id"> & import("@react-navigation/native").DefaultRouterOptions<string> & {
+declare const RNStack: import("react").ForwardRefExoticComponent<Omit<Omit<import("@react-navigation/native-stack").NativeStackNavigatorProps, "children" | "layout" | "initialRouteName" | "id" | "screenOptions" | "screenListeners" | "screenLayout" | "UNSTABLE_router"> & import("@react-navigation/native").DefaultRouterOptions<string> & {
     children: React.ReactNode;
     layout?: ((props: {
         state: StackNavigationState<ParamListBase>;
@@ -87,7 +87,7 @@ declare const RNStack: import("react").ForwardRefExoticComponent<Omit<Omit<impor
     }>>(original: import("@react-navigation/native").Router<StackNavigationState<ParamListBase>, Action>) => Partial<import("@react-navigation/native").Router<StackNavigationState<ParamListBase>, Action>>) | undefined;
 } & {
     id?: undefined;
-}, "children"> & Partial<Pick<Omit<import("@react-navigation/native-stack").NativeStackNavigatorProps, "initialRouteName" | "children" | "layout" | "screenListeners" | "screenOptions" | "screenLayout" | "UNSTABLE_router" | "id"> & import("@react-navigation/native").DefaultRouterOptions<string> & {
+}, "children"> & Partial<Pick<Omit<import("@react-navigation/native-stack").NativeStackNavigatorProps, "children" | "layout" | "initialRouteName" | "id" | "screenOptions" | "screenListeners" | "screenLayout" | "UNSTABLE_router"> & import("@react-navigation/native").DefaultRouterOptions<string> & {
     children: React.ReactNode;
     layout?: ((props: {
         state: StackNavigationState<ParamListBase>;
