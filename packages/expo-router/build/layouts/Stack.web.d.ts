@@ -1,5 +1,5 @@
 import { ComponentProps } from 'react';
-import { RouterModal } from './ModalStack';
+import { RouterModal } from './ModalStack.web';
 declare const Stack: ((props: ComponentProps<typeof RouterModal>) => import("react").JSX.Element) & {
     Screen: (props: import("..").ScreenProps<object, Readonly<{
         key: string;

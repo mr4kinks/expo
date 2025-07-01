@@ -6,7 +6,7 @@ const native_1 = require("@react-navigation/native");
 const native_stack_1 = require("@react-navigation/native-stack");
 const non_secure_1 = require("nanoid/non-secure");
 const react_1 = require("react");
-const ModalStack_1 = require("./ModalStack");
+const ModalStack_web_1 = require("./ModalStack.web");
 const withLayoutContext_1 = require("./withLayoutContext");
 const LinkPreviewContext_1 = require("../link/preview/LinkPreviewContext");
 const useScreens_1 = require("../useScreens");
@@ -271,7 +271,7 @@ const Stack = Object.assign((props) => {
         return props.screenOptions;
     }, [props.screenOptions, isPreviewOpen]);
     if (isWeb) {
-        return (<ModalStack_1.RouterModal {...props} screenOptions={screenOptions} UNSTABLE_router={exports.stackRouterOverride}/>);
+        return (<ModalStack_web_1.RouterModal {...props} screenOptions={screenOptions} UNSTABLE_router={exports.stackRouterOverride}/>);
     }
     else {
         return (<RNStack {...props} screenOptions={screenOptions} UNSTABLE_router={exports.stackRouterOverride}/>);

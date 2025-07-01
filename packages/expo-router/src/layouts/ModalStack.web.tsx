@@ -8,7 +8,6 @@ import {
 } from '@react-navigation/native';
 import { NativeStackView } from '@react-navigation/native-stack';
 import React from 'react';
-import { Platform } from 'react-native';
 import { Drawer } from 'vaul';
 
 import { ExtendedStackNavigationOptions } from './StackClient';
@@ -24,6 +23,19 @@ type Props = {
 type CSSWithVars = React.CSSProperties & {
   [key: `--${string}`]: string | number;
 };
+
+// Helper to determine if a given screen should be treated as a modal-type presentation
+function isModalPresentation(
+  options?: Partial<Pick<ExtendedStackNavigationOptions, 'presentation'>> | null
+) {
+  const presentation = options?.presentation;
+  return (
+    presentation === 'modal' ||
+    presentation === 'formSheet' ||
+    presentation === 'fullScreenModal' ||
+    presentation === 'containedModal'
+  );
+}
 
 function ModalStackNavigator({ initialRouteName, children, screenOptions }: Props) {
   const { state, navigation, descriptors, NavigationContent, describe } = useNavigationBuilder(
@@ -66,16 +78,11 @@ function ModalStackView({
   >;
   describe: any;
 }) {
-  const isWeb = Platform.OS === 'web';
+  const isWeb = process.env.EXPO_OS === 'web';
   const { colors } = useTheme();
 
   const nonModalRoutes = state.routes.filter((route) => {
-    const { presentation } = descriptors[route.key].options || {};
-    const isModalType =
-      presentation === 'modal' ||
-      presentation === 'formSheet' ||
-      presentation === 'fullScreenModal' ||
-      presentation === 'containedModal';
+    const isModalType = isModalPresentation(descriptors[route.key].options);
     return !(isWeb && isModalType);
   });
 
@@ -94,12 +101,7 @@ function ModalStackView({
       />
       {isWeb &&
         state.routes.map((route, i) => {
-          const { presentation } = descriptors[route.key].options || {};
-          const isModalType =
-            presentation === 'modal' ||
-            presentation === 'formSheet' ||
-            presentation === 'fullScreenModal' ||
-            presentation === 'containedModal';
+          const isModalType = isModalPresentation(descriptors[route.key].options);
           const isActive = i === state.index && isModalType;
           if (!isActive) return null;
 
@@ -139,9 +141,12 @@ function RouteDrawer({
   themeColors: { card: string; background: string };
 }) {
   const [open, setOpen] = React.useState(true);
-  // Determine layout based on viewport width (desktop vs mobile)
+  // Determine sheet vs. modal with an SSR-safe hook. The first render (during
+  // hydration) always assumes mobile/sheet to match the server markup; an
+  // effect then updates the state after mount if the viewport is desktop.
   const isDesktop = useIsDesktop();
   const isSheet = !isDesktop;
+
   // Resolve snap points logic.
   const allowed = options.sheetAllowedDetents;
 
@@ -160,7 +165,7 @@ function RouteDrawer({
     useCustomSnapPoints && isArrayDetents ? allowed[0] : 1
   );
 
-  // When the viewport flips between desktop <-> mobile, update snap value accordingly.
+  // Update the snap value when custom snap points change.
   React.useEffect(() => {
     if (isSheet) {
       const next = useCustomSnapPoints && isArrayDetents ? allowed[0] : 1;
@@ -169,7 +174,7 @@ function RouteDrawer({
       // Desktop modal always fixed snap at 1
       setSnap(1);
     }
-  }, [isSheet]);
+  }, [isSheet, useCustomSnapPoints, isArrayDetents, allowed]);
 
   // Map react-native-screens ios sheet undimmed logic to Vaul's fadeFromIndex
   const fadeFromIndex = isSheet
@@ -322,16 +327,15 @@ function RouteDrawer({
 }
 
 /**
- * Hook that returns `true` when the viewport width is considered desktop-sized.
- * The default breakpoint is 1024 px (iPad landscape and larger).
+ * SSR-safe viewport detection: initial render always returns `false` so that
+ * server and client markup match. The actual media query evaluation happens
+ * after mount.
  */
 function useIsDesktop(breakpoint: number = 768) {
-  const isWeb = Platform.OS === 'web';
+  const isWeb = process.env.EXPO_OS === 'web';
 
-  const [isDesktop, setIsDesktop] = React.useState<boolean>(() => {
-    if (!isWeb || typeof window === 'undefined') return false;
-    return window.matchMedia(`(min-width: ${breakpoint}px)`).matches;
-  });
+  // Ensure server-side and initial client render agree (mobile first).
+  const [isDesktop, setIsDesktop] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     if (!isWeb || typeof window === 'undefined') return;
@@ -339,14 +343,11 @@ function useIsDesktop(breakpoint: number = 768) {
     const mql = window.matchMedia(`(min-width: ${breakpoint}px)`);
     const listener = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
 
-    mql.addEventListener('change', listener);
-
-    // Ensure state is current
+    // Update immediately after mount
     setIsDesktop(mql.matches);
 
-    return () => {
-      mql.removeEventListener('change', listener);
-    };
+    mql.addEventListener('change', listener);
+    return () => mql.removeEventListener('change', listener);
   }, [breakpoint, isWeb]);
 
   return isDesktop;

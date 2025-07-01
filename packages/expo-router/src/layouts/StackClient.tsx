@@ -20,7 +20,7 @@ import { nanoid } from 'nanoid/non-secure';
 import { ComponentProps, useMemo } from 'react';
 import { StackAnimationTypes } from 'react-native-screens';
 
-import { RouterModal } from './ModalStack';
+import { RouterModal } from './ModalStack.web';
 import { withLayoutContext } from './withLayoutContext';
 import { useLinkPreviewContext } from '../link/preview/LinkPreviewContext';
 import { SingularOptions, getSingularId } from '../useScreens';

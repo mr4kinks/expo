@@ -7,10 +7,17 @@ exports.RouterModal = void 0;
 const native_1 = require("@react-navigation/native");
 const native_stack_1 = require("@react-navigation/native-stack");
 const react_1 = __importDefault(require("react"));
-const react_native_1 = require("react-native");
 const vaul_1 = require("vaul");
 const withLayoutContext_1 = require("./withLayoutContext");
 const modal_module_css_1 = __importDefault(require("../../assets/modal.module.css"));
+// Helper to determine if a given screen should be treated as a modal-type presentation
+function isModalPresentation(options) {
+    const presentation = options?.presentation;
+    return (presentation === 'modal' ||
+        presentation === 'formSheet' ||
+        presentation === 'fullScreenModal' ||
+        presentation === 'containedModal');
+}
 function ModalStackNavigator({ initialRouteName, children, screenOptions }) {
     const { state, navigation, descriptors, NavigationContent, describe } = (0, native_1.useNavigationBuilder)(native_1.StackRouter, {
         children,
@@ -22,14 +29,10 @@ function ModalStackNavigator({ initialRouteName, children, screenOptions }) {
     </NavigationContent>);
 }
 function ModalStackView({ state, navigation, descriptors, describe, }) {
-    const isWeb = react_native_1.Platform.OS === 'web';
+    const isWeb = process.env.EXPO_OS === 'web';
     const { colors } = (0, native_1.useTheme)();
     const nonModalRoutes = state.routes.filter((route) => {
-        const { presentation } = descriptors[route.key].options || {};
-        const isModalType = presentation === 'modal' ||
-            presentation === 'formSheet' ||
-            presentation === 'fullScreenModal' ||
-            presentation === 'containedModal';
+        const isModalType = isModalPresentation(descriptors[route.key].options);
         return !(isWeb && isModalType);
     });
     let nonModalIndex = nonModalRoutes.findIndex((r) => r.key === state.routes[state.index]?.key);
@@ -40,11 +43,7 @@ function ModalStackView({ state, navigation, descriptors, describe, }) {
       <native_stack_1.NativeStackView state={newStackState} navigation={navigation} descriptors={descriptors} describe={describe}/>
       {isWeb &&
             state.routes.map((route, i) => {
-                const { presentation } = descriptors[route.key].options || {};
-                const isModalType = presentation === 'modal' ||
-                    presentation === 'formSheet' ||
-                    presentation === 'fullScreenModal' ||
-                    presentation === 'containedModal';
+                const isModalType = isModalPresentation(descriptors[route.key].options);
                 const isActive = i === state.index && isModalType;
                 if (!isActive)
                     return null;
@@ -58,7 +57,9 @@ exports.RouterModal = RouterModal;
 // Internal helper component
 function RouteDrawer({ routeKey, options, renderScreen, onDismiss, themeColors, }) {
     const [open, setOpen] = react_1.default.useState(true);
-    // Determine layout based on viewport width (desktop vs mobile)
+    // Determine sheet vs. modal with an SSR-safe hook. The first render (during
+    // hydration) always assumes mobile/sheet to match the server markup; an
+    // effect then updates the state after mount if the viewport is desktop.
     const isDesktop = useIsDesktop();
     const isSheet = !isDesktop;
     // Resolve snap points logic.
@@ -72,7 +73,7 @@ function RouteDrawer({ routeKey, options, renderScreen, onDismiss, themeColors, 
         snapPoints = [1];
     }
     const [snap, setSnap] = react_1.default.useState(useCustomSnapPoints && isArrayDetents ? allowed[0] : 1);
-    // When the viewport flips between desktop <-> mobile, update snap value accordingly.
+    // Update the snap value when custom snap points change.
     react_1.default.useEffect(() => {
         if (isSheet) {
             const next = useCustomSnapPoints && isArrayDetents ? allowed[0] : 1;
@@ -82,7 +83,7 @@ function RouteDrawer({ routeKey, options, renderScreen, onDismiss, themeColors, 
             // Desktop modal always fixed snap at 1
             setSnap(1);
         }
-    }, [isSheet]);
+    }, [isSheet, useCustomSnapPoints, isArrayDetents, allowed]);
     // Map react-native-screens ios sheet undimmed logic to Vaul's fadeFromIndex
     const fadeFromIndex = isSheet
         ? options.sheetLargestUndimmedDetentIndex === 'last'
@@ -196,27 +197,23 @@ function RouteDrawer({ routeKey, options, renderScreen, onDismiss, themeColors, 
     </vaul_1.Drawer.Root>);
 }
 /**
- * Hook that returns `true` when the viewport width is considered desktop-sized.
- * The default breakpoint is 1024 px (iPad landscape and larger).
+ * SSR-safe viewport detection: initial render always returns `false` so that
+ * server and client markup match. The actual media query evaluation happens
+ * after mount.
  */
 function useIsDesktop(breakpoint = 768) {
-    const isWeb = react_native_1.Platform.OS === 'web';
-    const [isDesktop, setIsDesktop] = react_1.default.useState(() => {
-        if (!isWeb || typeof window === 'undefined')
-            return false;
-        return window.matchMedia(`(min-width: ${breakpoint}px)`).matches;
-    });
+    const isWeb = process.env.EXPO_OS === 'web';
+    // Ensure server-side and initial client render agree (mobile first).
+    const [isDesktop, setIsDesktop] = react_1.default.useState(false);
     react_1.default.useEffect(() => {
         if (!isWeb || typeof window === 'undefined')
             return;
         const mql = window.matchMedia(`(min-width: ${breakpoint}px)`);
         const listener = (e) => setIsDesktop(e.matches);
-        mql.addEventListener('change', listener);
-        // Ensure state is current
+        // Update immediately after mount
         setIsDesktop(mql.matches);
-        return () => {
-            mql.removeEventListener('change', listener);
-        };
+        mql.addEventListener('change', listener);
+        return () => mql.removeEventListener('change', listener);
     }, [breakpoint, isWeb]);
     return isDesktop;
 }

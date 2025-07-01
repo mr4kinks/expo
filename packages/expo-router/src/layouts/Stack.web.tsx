@@ -1,6 +1,6 @@
 import { ComponentProps } from 'react';
 
-import { RouterModal } from './ModalStack';
+import { RouterModal } from './ModalStack.web';
 import { stackRouterOverride } from './StackClient';
 import { Protected } from '../views/Protected';
 
