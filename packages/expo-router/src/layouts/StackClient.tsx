@@ -18,7 +18,6 @@ import {
 } from '@react-navigation/native-stack';
 import { nanoid } from 'nanoid/non-secure';
 import { ComponentProps, useMemo } from 'react';
-import { Platform } from 'react-native';
 import { StackAnimationTypes } from 'react-native-screens';
 
 import { RouterModal } from './ModalStack';
@@ -391,6 +390,7 @@ function filterSingular<
 
 const Stack = Object.assign(
   (props: ComponentProps<typeof RNStack>) => {
+    const isWeb = process.env.EXPO_OS === 'web';
     const { isPreviewOpen } = useLinkPreviewContext();
     const screenOptions = useMemo(() => {
       if (isPreviewOpen) {
@@ -398,10 +398,15 @@ const Stack = Object.assign(
       }
       return props.screenOptions;
     }, [props.screenOptions, isPreviewOpen]);
-    const isWeb = Platform.OS === 'web';
 
     if (isWeb) {
-      return <RouterModal {...props} UNSTABLE_router={stackRouterOverride} />;
+      return (
+        <RouterModal
+          {...props}
+          screenOptions={screenOptions}
+          UNSTABLE_router={stackRouterOverride}
+        />
+      );
     } else {
       return (
         <RNStack {...props} screenOptions={screenOptions} UNSTABLE_router={stackRouterOverride} />
